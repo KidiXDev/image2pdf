@@ -3,8 +3,8 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 
 import HeaderC from "../components/HeaderC";
-import CButton from "../components/BaseButtonC";
 import DragAndDropComponent from "../components/DragAndDropC";
+import ConvertC from "../components/ConvertC";
 
 interface IContentProps {
   getRootProps: any;
@@ -76,6 +76,7 @@ const HomePage = () => {
           getInputProps={getInputProps}
           imageExist={imageIsInputed}
         />
+        <ConvertC imageExist={imageIsInputed} />
       </div>
     </div>
   );

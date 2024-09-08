@@ -1,5 +1,3 @@
-import React, { useCallback } from "react";
-import { DropzoneInputProps, useDropzone } from "react-dropzone";
 import CButton from "./BaseButtonC";
 
 interface CDragAndDropProps {
