@@ -1,8 +1,9 @@
+import { DropzoneRootProps } from "react-dropzone";
 import CButton from "./BaseButtonC";
 
 interface CDragAndDropProps {
-  getRootProps: any;
-  getInputProps: any;
+  getRootProps: <T extends DropzoneRootProps>(props?: T) => T;
+  getInputProps: <T extends DropzoneRootProps>(props?: T) => T;
 }
 
 const DragAndDropComponent: React.FC<CDragAndDropProps> = ({
@@ -24,7 +25,7 @@ const DragAndDropComponent: React.FC<CDragAndDropProps> = ({
             or
           </p>
         </div>
-        <CButton text="Upload Images" />
+        <CButton text="Select Images" />
       </div>
     </div>
   );
