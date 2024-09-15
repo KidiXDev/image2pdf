@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DropzoneRootProps, useDropzone } from "react-dropzone";
 
 import HeaderC from "../components/HeaderC";
@@ -211,6 +211,16 @@ const HomePage = () => {
     images.forEach((image) => URL.revokeObjectURL(image.src));
   };
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <div className="relative flex size-full min-h-screen flex-col bg-slate-50 overflow-x-hidden">
       {isLoading && (
@@ -220,8 +230,21 @@ const HomePage = () => {
             <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.3s]"></div>
             <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.5s]"></div>
           </div>
-          <div className="text-white text-xl mt-10">
+          <div className="text-white text-xl mt-10 text-center">
             <span>{loadingTip}</span>
+          </div>
+        </div>
+      )}
+
+      {isMobile && (
+        <div className="inset-0 bg-black opacity-90 z-50 flex flex-col items-center justify-center fixed">
+          <div className="flex flex-row gap-2">
+            <div className="w-4 h-4 rounded-full bg-white animate-bounce"></div>
+            <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.3s]"></div>
+            <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.5s]"></div>
+          </div>
+          <div className="text-white text-xl mt-10 text-center">
+            <span>Sorry, this site is not available on mobile devices</span>
           </div>
         </div>
       )}
