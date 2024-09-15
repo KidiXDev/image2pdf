@@ -19,3 +19,5 @@ Starting server
 ```
 npm run dev
 ```
+
+## Mobile view support is under development
