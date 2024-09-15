@@ -56,6 +56,21 @@ const HomePage = () => {
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const validTypes = ["image/png", "image/jpeg"];
+
+    const filteredFiles = acceptedFiles.filter((file) =>
+      validTypes.includes(file.type)
+    );
+
+    if (filteredFiles.length === 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Unsupported file type",
+        text: "Supported file types: PNG, JPEG",
+      });
+      return;
+    }
+
     if (acceptedFiles.length > 80) {
       Swal.fire({
         icon: "error",
@@ -78,7 +93,6 @@ const HomePage = () => {
         reader.onload = async () => {
           const binaryStr = reader.result as string;
 
-          // Kompresi gambar
           const compressedFile = await imageCompression(file, options);
           const compressedSrc = URL.createObjectURL(compressedFile);
 
@@ -145,15 +159,11 @@ const HomePage = () => {
         let y = 0;
 
         if (config === "fit-img-size") {
-          // Adjust PDF page size to match image aspect ratio
           if (imgWidth / imgHeight > pdfWidth / pdfHeight) {
-            // Image is wider relative to its height than the default page
             pdfHeight = (pdfWidth * imgHeight) / imgWidth;
           } else {
-            // Image is taller relative to its width than the default page
             pdfWidth = (pdfHeight * imgWidth) / imgHeight;
           }
-          // Create a new PDF with the correct page size
           if (index > 0) {
             pdf.addPage(
               [pdfWidth, pdfHeight],

@@ -1,10 +1,11 @@
+import Swal from "sweetalert2";
 import CButton from "./BaseButtonC";
 
 const reloadPage = () => {
   window.location.reload();
 };
 
-const HeaderC = ({ onClick }: { onClick?: () => void }) => {
+const HeaderC = ({}: { onClick?: () => void }) => {
   return (
     <header className="flex w-full items-center justify-between whitespace-nowrap border-b border-solid bg-white z-10 border-b-[#e7edf3] px-10 py-3 shadow-md fixed">
       <div className="flex items-center gap-4 text-[#0e141b]">
@@ -34,7 +35,16 @@ const HeaderC = ({ onClick }: { onClick?: () => void }) => {
           </div>
         </button>
       </div>
-      <CButton text="About" onClick={onClick} />
+      <CButton
+        text="About"
+        onClick={() =>
+          Swal.fire({
+            title: "About Image2PDF",
+            text: "This site developed by @KidiXDev",
+            icon: "question",
+          })
+        }
+      />
     </header>
   );
 };

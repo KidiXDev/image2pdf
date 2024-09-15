@@ -11,11 +11,7 @@ interface DropdownCProps {
   selectedValue?: string;
 }
 
-const DropdownC = ({
-  elements,
-  onChange,
-  selectedValue = elements[0].value,
-}: DropdownCProps) => {
+const DropdownC = ({ elements, onChange }: DropdownCProps) => {
   const [placeholderValue, setPlaceholderValue] = useState(elements[0].element);
 
   const showDropDown = () => {
@@ -60,7 +56,6 @@ const DropdownC = ({
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 w-full"
                 role="menuitem"
                 onClick={() => {
-                  selectedValue = element.value;
                   setPlaceholderValue(element.element);
                   onChange && onChange(element.value);
                   showDropDown();
