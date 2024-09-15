@@ -6,3 +6,14 @@
   font-family: "Noto Sans", sans-serif;
   font-optical-sizing: auto;
 }
+
+/* @layer utilities {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+   {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+} */
