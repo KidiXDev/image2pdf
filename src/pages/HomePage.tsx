@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DropzoneRootProps, useDropzone } from "react-dropzone";
 
 import HeaderC from "../components/HeaderC";
@@ -24,7 +23,7 @@ const Content = ({ getRootProps, getInputProps }: IContentProps) => {
         <p className="text-[#0e141b] text-base font-normal leading-normal pb-3 pt-1 px-4 text-center">
           Drag and drop images here or click to select images
           <br />
-          <span className="italic text-sm">(max 80 images)</span>
+          <span className="italic text-sm">(max 280 images)</span>
         </p>
         <DragAndDropComponent
           getRootProps={getRootProps}
@@ -58,11 +57,11 @@ const HomePage = () => {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const validTypes = ["image/png", "image/jpeg"];
 
-    const filteredFiles = acceptedFiles.filter((file) =>
-      validTypes.includes(file.type)
+    const filteredFiles = acceptedFiles.filter(
+      (file) => !validTypes.includes(file.type)
     );
 
-    if (filteredFiles.length === 0) {
+    if (filteredFiles.length > 0 || acceptedFiles.length == 0) {
       Swal.fire({
         icon: "error",
         title: "Unsupported file type",
@@ -71,11 +70,11 @@ const HomePage = () => {
       return;
     }
 
-    if (acceptedFiles.length > 80) {
+    if (acceptedFiles.length > 280) {
       Swal.fire({
         icon: "error",
         title: "Sorry",
-        text: "You can only upload up to 80 images",
+        text: "You can only upload up to 280 images",
       });
       return;
     }
@@ -138,6 +137,19 @@ const HomePage = () => {
     setIsLoading(false);
   };
 
+  /**
+   * Converts an array of images to a PDF file.
+   *
+   * The function takes an optional configuration string to determine how the images are scaled within the PDF.
+   * The supported configurations are:
+   *   - "fit-img-size": The PDF page size is adjusted to fit the image size.
+   *   - "default": The image is scaled down to fit within the PDF page while maintaining its aspect ratio.
+   *   - "cover": The image is scaled up to cover the entire PDF page while maintaining its aspect ratio.
+   *   - "stretch": The image is stretched to fill the entire PDF page without maintaining its aspect ratio.
+   *
+   * @param {string} config - The configuration string to determine how the images are scaled.
+   * @return {void}
+   */
   const convertImagesToPDF = (config: string) => {
     setLoadingTip("Converting images to PDF");
     let pdf = new jsPDF();
@@ -211,6 +223,16 @@ const HomePage = () => {
     images.forEach((image) => URL.revokeObjectURL(image.src));
   };
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <div className="relative flex size-full min-h-screen flex-col bg-slate-50 overflow-x-hidden">
       {isLoading && (
@@ -220,8 +242,21 @@ const HomePage = () => {
             <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.3s]"></div>
             <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.5s]"></div>
           </div>
-          <div className="text-white text-xl mt-10">
+          <div className="text-white text-xl mt-10 text-center">
             <span>{loadingTip}</span>
+          </div>
+        </div>
+      )}
+
+      {isMobile && (
+        <div className="inset-0 bg-black opacity-90 z-50 flex flex-col items-center justify-center fixed">
+          <div className="flex flex-row gap-2">
+            <div className="w-4 h-4 rounded-full bg-white animate-bounce"></div>
+            <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.3s]"></div>
+            <div className="w-4 h-4 rounded-full bg-white animate-bounce [animation-delay:-.5s]"></div>
+          </div>
+          <div className="text-white text-xl mt-10 text-center">
+            <span>Sorry, this site is not available on mobile devices</span>
           </div>
         </div>
       )}

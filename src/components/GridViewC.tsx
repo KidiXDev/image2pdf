@@ -41,14 +41,6 @@ const GridViewC: React.FC<GridViewProps> = ({
 
     setCompressedImages(reorderedCompressedImages);
     setImages(reorderedImages);
-
-    reorderedImages.forEach((element) => {
-      console.log("Original: ", element.name);
-    });
-
-    reorderedCompressedImages.forEach((element) => {
-      console.log("Compressed:", element.name);
-    });
   };
 
   const handleClick = (id: string) => {
