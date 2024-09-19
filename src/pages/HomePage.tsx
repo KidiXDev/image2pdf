@@ -55,7 +55,7 @@ const HomePage = () => {
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const validTypes = ["image/png", "image/jpeg"];
+    const validTypes = ["image/png", "image/jpeg", "image/webp"];
 
     const filteredFiles = acceptedFiles.filter(
       (file) => !validTypes.includes(file.type)
@@ -128,6 +128,7 @@ const HomePage = () => {
     accept: {
       "image/png": [],
       "image/jpeg": [],
+      "image/webp": [],
     },
   });
 
