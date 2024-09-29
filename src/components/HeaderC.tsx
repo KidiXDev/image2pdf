@@ -5,7 +5,7 @@ const reloadPage = () => {
   window.location.reload();
 };
 
-const HeaderC = ({}: { onClick?: () => void }) => {
+const HeaderC = () => {
   return (
     <header className="flex w-full items-center justify-between whitespace-nowrap border-b border-solid bg-white z-10 border-b-[#e7edf3] px-10 py-3 shadow-md fixed">
       <div className="flex items-center gap-4 text-[#0e141b]">
@@ -40,8 +40,27 @@ const HeaderC = ({}: { onClick?: () => void }) => {
         onClick={() =>
           Swal.fire({
             title: "About Image2PDF",
-            text: "This site developed by @KidiXDev",
-            icon: "question",
+            html: `
+      <div class="text-justify">
+        <p>Easiest way to convert images to PDF with just a few clicks!</p>
+        <p>Image2PDF offers a seamless and efficient way to <br/>transform your images into high-quality PDF documents.</p>
+        <br/>
+        <p>This site was developed by 
+          <a href="https://github.com/KidiXDev" 
+             target="_blank" 
+             class="text-green-700 hover:text-green-500 hover:underline transition">
+            @KidiXDev
+          </a>
+      </div>`,
+            icon: "info",
+            confirmButtonText: "Close",
+            customClass: {
+              popup: "bg-white shadow-lg rounded-lg",
+              title: "text-lg font-semibold",
+              confirmButton:
+                "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700",
+            },
+            width: "auto",
           })
         }
       />
