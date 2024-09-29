@@ -48,80 +48,103 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingTip, setLoadingTip] = useState("Please Wait");
 
-  const options = {
-    maxSizeMB: 1,
-    maxWidthOrHeight: 600,
-    useWebWorker: true,
-  };
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 600,
+        useWebWorker: true,
+      };
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const validTypes = ["image/png", "image/jpeg", "image/webp"];
+      const handleClick = () => {
+        setImageIsInputed(!imageIsInputed);
 
-    const filteredFiles = acceptedFiles.filter(
-      (file) => !validTypes.includes(file.type)
-    );
+        setIsLoading(false);
+      };
 
-    if (filteredFiles.length > 0 || acceptedFiles.length == 0) {
-      Swal.fire({
-        icon: "error",
-        title: "Unsupported file type",
-        text: "Supported file types: PNG, JPEG",
-      });
-      return;
-    }
+      const validTypes = ["image/png", "image/jpeg", "image/webp"];
 
-    if (acceptedFiles.length > 280) {
-      Swal.fire({
-        icon: "error",
-        title: "Sorry",
-        text: "You can only upload up to 280 images",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    const imagesPromises = acceptedFiles.map(async (file) => {
-      const reader = new FileReader();
-
-      return new Promise<{
-        src: string;
-        name: string;
-        compressedSrc: string;
-      }>((resolve) => {
-        reader.onload = async () => {
-          const binaryStr = reader.result as string;
-
-          const compressedFile = await imageCompression(file, options);
-          const compressedSrc = URL.createObjectURL(compressedFile);
-
-          resolve({
-            src: binaryStr,
-            name: file.name,
-            compressedSrc,
-          });
-        };
-
-        reader.readAsDataURL(file);
-      });
-    });
-
-    try {
-      const images = await Promise.all(imagesPromises);
-
-      setImages(images.map(({ src, name }) => ({ src, name })));
-      setCompressedImages(
-        images.map(({ compressedSrc, name }) => ({
-          src: compressedSrc,
-          name,
-        }))
+      const filteredFiles = acceptedFiles.filter(
+        (file) => !validTypes.includes(file.type)
       );
-    } finally {
-      setIsLoading(false);
-    }
 
-    handleClick();
-  }, []);
+      if (filteredFiles.length > 0 || acceptedFiles.length == 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Unsupported file type",
+          text: "Supported file types: PNG, JPEG, and WEBP",
+          confirmButtonText: "Close",
+          customClass: {
+            popup: "bg-white shadow-lg rounded-lg",
+            title: "text-lg font-semibold",
+            confirmButton:
+              "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700",
+          },
+        });
+        return;
+      }
+
+      if (acceptedFiles.length > 280) {
+        Swal.fire({
+          icon: "error",
+          title: "Sorry",
+          text: "You can only upload up to 280 images",
+          confirmButtonText: "Close",
+          customClass: {
+            popup: "bg-white shadow-lg rounded-lg",
+            title: "text-lg font-semibold",
+            confirmButton:
+              "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700",
+          },
+        });
+        return;
+      }
+
+      setIsLoading(true);
+
+      const imagesPromises = acceptedFiles.map(async (file) => {
+        const reader = new FileReader();
+
+        return new Promise<{
+          src: string;
+          name: string;
+          compressedSrc: string;
+        }>((resolve) => {
+          reader.onload = async () => {
+            const binaryStr = reader.result as string;
+
+            const compressedFile = await imageCompression(file, options);
+            const compressedSrc = URL.createObjectURL(compressedFile);
+
+            resolve({
+              src: binaryStr,
+              name: file.name,
+              compressedSrc,
+            });
+          };
+
+          reader.readAsDataURL(file);
+        });
+      });
+
+      try {
+        const images = await Promise.all(imagesPromises);
+
+        setImages(images.map(({ src, name }) => ({ src, name })));
+        setCompressedImages(
+          images.map(({ compressedSrc, name }) => ({
+            src: compressedSrc,
+            name,
+          }))
+        );
+      } finally {
+        setIsLoading(false);
+      }
+
+      handleClick();
+    },
+    [imageIsInputed]
+  );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -131,12 +154,6 @@ const HomePage = () => {
       "image/webp": [],
     },
   });
-
-  const handleClick = () => {
-    setImageIsInputed(!imageIsInputed);
-
-    setIsLoading(false);
-  };
 
   /**
    * Converts an array of images to a PDF file.
@@ -280,6 +297,7 @@ const HomePage = () => {
                 convertImagesToPDF(value);
               }, 100); // Add a delay to show the loading tip
             }}
+            setIsLoading={setIsLoading}
           />
         )}
       </div>

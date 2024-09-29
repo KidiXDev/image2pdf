@@ -1,9 +1,15 @@
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "@hello-pangea/dnd";
 
 import CButton from "./BaseButtonC";
 import ConvertC from "./ConvertC";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import DropdownC from "./DropdownC";
+import ContextMenu from "./ContextMenu";
 
 interface ImageItem {
   src: string;
@@ -17,6 +23,7 @@ interface GridViewProps {
   setCompressedImages: React.Dispatch<React.SetStateAction<ImageItem[]>>;
 
   convertImage?: (configValue: string) => void;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 const GridViewC: React.FC<GridViewProps> = ({
@@ -25,10 +32,40 @@ const GridViewC: React.FC<GridViewProps> = ({
   compressedImages,
   setCompressedImages,
   convertImage,
+  setIsLoading,
 }) => {
   const [configValue, setConfigValue] = useState("default");
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [contextMenuItemIndex, setContextMenuItemIndex] = useState(0);
 
-  const onDragEnd = (result: any) => {
+  const handleContextMenu = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    setMenuPosition({ x: e.pageX, y: e.pageY });
+    setMenuVisible(true);
+  };
+
+  useEffect(() => {
+    const handleCloseMenu = () => {
+      setMenuVisible(false);
+    };
+
+    if (images.length <= 0 || compressedImages.length <= 0) {
+      window.location.href = "/";
+      return;
+    }
+
+    window.addEventListener("click", handleCloseMenu);
+    window.addEventListener("scroll", handleCloseMenu);
+
+    return () => {
+      window.removeEventListener("click", handleCloseMenu);
+      window.removeEventListener("scroll", handleCloseMenu);
+    };
+  }, [images, compressedImages]);
+
+  const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
     const reorderedCompressedImages = Array.from(compressedImages);
@@ -58,6 +95,72 @@ const GridViewC: React.FC<GridViewProps> = ({
       : "h-fit"
   }`;
 
+  const handleContextMenuItemAction = (
+    action: "moveToTop" | "moveToBottom" | "delete"
+  ) => {
+    switch (action) {
+      case "moveToTop": {
+        setIsLoading(true);
+        requestAnimationFrame(() => {
+          const reorderedCompressedImages = Array.from(compressedImages);
+          const [removed] = reorderedCompressedImages.splice(
+            contextMenuItemIndex,
+            1
+          );
+          reorderedCompressedImages.splice(0, 0, removed);
+
+          const reorderedImages = reorderedCompressedImages.map(
+            (image) => images.find((img) => img.name === image.name)!
+          );
+
+          setCompressedImages(reorderedCompressedImages);
+          setImages(reorderedImages);
+          setIsLoading(false);
+        });
+        break;
+      }
+      case "moveToBottom": {
+        setIsLoading(true);
+        requestAnimationFrame(() => {
+          const reorderedCompressedImages = Array.from(compressedImages);
+          const [removed] = reorderedCompressedImages.splice(
+            contextMenuItemIndex,
+            1
+          );
+          reorderedCompressedImages.splice(
+            reorderedCompressedImages.length,
+            0,
+            removed
+          );
+
+          const reorderedImages = reorderedCompressedImages.map(
+            (image) => images.find((img) => img.name === image.name)!
+          );
+
+          setCompressedImages(reorderedCompressedImages);
+          setImages(reorderedImages);
+          setIsLoading(false);
+        });
+        break;
+      }
+      case "delete": {
+        setIsLoading(true);
+        requestAnimationFrame(() => {
+          const reorderedCompressedImages = Array.from(compressedImages);
+          reorderedCompressedImages.splice(contextMenuItemIndex, 1);
+          setCompressedImages(reorderedCompressedImages);
+
+          const reorderedImages = reorderedCompressedImages.map(
+            (image) => images.find((img) => img.name === image.name)!
+          );
+          setImages(reorderedImages);
+          setIsLoading(false);
+        });
+        break;
+      }
+    }
+  };
+
   return (
     <div className="flex">
       <div
@@ -85,6 +188,11 @@ const GridViewC: React.FC<GridViewProps> = ({
                         {...provided.dragHandleProps}
                         onClick={() => {
                           handleClick(image.name);
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleContextMenu(e);
+                          setContextMenuItemIndex(index);
                         }}
                       >
                         <ConvertC imageSrc={image.src} imageName={image.name} />
@@ -115,6 +223,15 @@ const GridViewC: React.FC<GridViewProps> = ({
           </div>
         ))}
       </div>
+
+      {menuVisible && (
+        <div
+          className="w-fit absolute"
+          style={{ top: menuPosition.y, left: menuPosition.x }}
+        >
+          <ContextMenu onAction={handleContextMenuItemAction} />
+        </div>
+      )}
 
       <div className="right-0 h-full fixed w-3/12 shadow-xl px-10 py-14 mt-10 bg-[#fafafafa] hidden md:block">
         <h1 className="text-2xl mb-10">Control Panel</h1>
