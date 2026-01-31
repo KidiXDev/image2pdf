@@ -19,7 +19,7 @@ const DropdownC = memo<DropdownCProps>(({ elements, onChange, value, label }) =>
 
   // Get the display text for the current value
   const selectedElement = elements.find(el => el.value === value) || elements[0];
-  const displayText = selectedElement?.element || elements[0]?.element;
+  const displayText = selectedElement.element;
 
   // Handle click outside
   useEffect(() => {

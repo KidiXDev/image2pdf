@@ -5,6 +5,10 @@ interface Position {
   y: number;
 }
 
+// Menu dimensions - should match ContextMenu component's Tailwind classes (w-52 = 13rem = 208px)
+const MENU_WIDTH = 208;
+const MENU_HEIGHT = 140; // Approximate height based on 3 menu items
+
 export function useContextMenu() {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
@@ -36,21 +40,17 @@ export function useContextMenu() {
     e.stopPropagation();
     
     // Use clientX/clientY for viewport-relative positioning
-    const menuWidth = 208; // w-52 = 13rem = 208px
-    const menuHeight = 140; // approximate height
-    
-    // Calculate position, ensuring menu stays within viewport
     let x = e.clientX;
     let y = e.clientY;
     
     // Adjust if menu would overflow right edge
-    if (x + menuWidth > window.innerWidth) {
-      x = window.innerWidth - menuWidth - 8;
+    if (x + MENU_WIDTH > window.innerWidth) {
+      x = window.innerWidth - MENU_WIDTH - 8;
     }
     
     // Adjust if menu would overflow bottom edge
-    if (y + menuHeight > window.innerHeight) {
-      y = window.innerHeight - menuHeight - 8;
+    if (y + MENU_HEIGHT > window.innerHeight) {
+      y = window.innerHeight - MENU_HEIGHT - 8;
     }
     
     // Ensure menu doesn't go off left or top edge
