@@ -13,7 +13,7 @@ import { usePDFConverter } from '../hooks/usePDFConverter';
 import { useImageStore } from '../stores/imageStore';
 import { useUIStore } from '../stores/uiStore';
 import ContextMenu from './ContextMenu';
-import ControlPanel from './ControlPanel'; // Import the new component
+import ControlPanel from './ControlPanel';
 import ConvertC from './ConvertC';
 
 interface GridViewProps {
@@ -37,7 +37,6 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
   const contextMenu = useContextMenu();
   const { convertToPDF } = usePDFConverter();
 
-  // Handle empty state - redirect to home
   useEffect(() => {
     if (images.length === 0 || compressedImages.length === 0) {
       clearAll();
@@ -64,7 +63,6 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
       const selectedIdx = contextMenu.selectedIndex;
       if (selectedIdx === null) return;
 
-      // Hide menu first (it handles animation internally)
       contextMenu.hide();
 
       setLoading(true);
@@ -113,14 +111,13 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
 
   const virtualizer = useWindowVirtualizer({
     count: Math.ceil(compressedImages.length / imagesPerPage),
-    estimateSize: () => 600, // Estimate based on visual size
+    estimateSize: () => 600,
     overscan: 2,
     scrollMargin: offsetTop
   });
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
-      {/* Left Sidebar - Image List (Desktop) */}
       <div
         className="hidden lg:block fixed left-0 top-0 mt-14 w-64 xl:w-72 bg-white/80 backdrop-blur-sm border-r border-slate-200 overflow-y-auto scrollbar-thin"
         style={{ height: 'calc(100vh - 3.5rem)' }}
@@ -174,11 +171,9 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
         </div>
       </div>
 
-      {/* Main Content - Preview */}
       <div className="flex-1 lg:ml-64 xl:ml-72 lg:mr-80 mt-14 min-h-screen">
         <div className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-3xl mx-auto space-y-6">
-            {/* Mobile Image Thumbnails */}
             <div className="lg:hidden">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-slate-800">
@@ -317,7 +312,6 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
         </div>
       </div>
 
-      {/* Right Sidebar - Control Panel (Desktop) */}
       <div
         className="hidden lg:block fixed right-0 top-0 mt-14 w-80 bg-white/80 backdrop-blur-sm border-l border-slate-200 overflow-y-auto scrollbar-thin"
         style={{ height: 'calc(100vh - 3.5rem)' }}
@@ -333,7 +327,6 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
         </div>
       </div>
 
-      {/* Mobile Settings Panel */}
       {showMobilePanel && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
@@ -361,7 +354,6 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
         </div>
       )}
 
-      {/* Context Menu */}
       {contextMenu.isRendered && (
         <div
           className="fixed z-50"
@@ -374,7 +366,6 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
         </div>
       )}
 
-      {/* Mobile Convert Button */}
       <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40">
         <button
           onClick={handleConvert}

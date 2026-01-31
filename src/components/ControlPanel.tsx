@@ -12,21 +12,11 @@ interface ControlPanelProps {
 
 const ControlPanel = memo<ControlPanelProps>(
   ({ isMobile = false, onAddMoreImages, onConvert }) => {
-    const { compressedImages, clearAll } = useImageStore();
+    const { clearAll } = useImageStore();
     const { pdfSettings, updatePDFSettings } = useUIStore();
 
     return (
       <div className={`${isMobile ? '' : 'space-y-5'}`}>
-        {/* Stats */}
-        <div className="bg-slate-50 rounded-xl p-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-600">Total Images</span>
-            <span className="font-semibold text-slate-800">
-              {compressedImages.length}
-            </span>
-          </div>
-        </div>
-
         {/* File Name */}
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-slate-500">

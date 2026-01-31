@@ -27,7 +27,8 @@ export function usePDFConverter() {
       margin,
       fileName,
       imageScaling,
-      imagesPerPage = 1
+      imagesPerPage = 1,
+      quality
     } = pdfSettings;
     const pageDimensions = PAGE_SIZES[pageSize] || PAGE_SIZES.a4;
 
@@ -92,8 +93,6 @@ export function usePDFConverter() {
         let y = margin + yOffset;
 
         if (imageScaling === 'fit-img-size' && imagesPerPage === 1) {
-          // Special case for fit-img-size with 1 image per page (resize page)
-          // We can't resize page easily for 2 images per page, so fallback to default fit for 2 images
           if (imagesPerPage === 1) {
             let newPageWidth = pageWidth;
             let newPageHeight = pageHeight;
@@ -146,11 +145,13 @@ export function usePDFConverter() {
         }
 
         // Detect image format
-        // Note: We use original image.src to detect format, assuming index matches
         const originalSrc = images[currentImageIndex + idx].src;
         const format = originalSrc.startsWith('data:image/png')
           ? 'PNG'
           : 'JPEG';
+
+        const compression =
+          quality === 'low' ? 'SLOW' : quality === 'medium' ? 'MEDIUM' : 'NONE';
 
         pdf.addImage(
           img,
@@ -160,7 +161,7 @@ export function usePDFConverter() {
           scaledWidth,
           scaledHeight,
           undefined,
-          'MEDIUM'
+          compression
         );
       });
 
