@@ -4,8 +4,9 @@ import {
   Droppable,
   DropResult
 } from '@hello-pangea/dnd';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Download, Settings, X } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useContextMenu } from '../hooks/useContextMenu';
 import { usePDFConverter } from '../hooks/usePDFConverter';
@@ -100,6 +101,22 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
           : 'h-fit'
     }`;
   }, [imageScaling]);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const [offsetTop, setOffsetTop] = useState(0);
+
+  useEffect(() => {
+    if (parentRef.current) {
+      setOffsetTop(parentRef.current.offsetTop);
+    }
+  }, []);
+
+  const virtualizer = useWindowVirtualizer({
+    count: compressedImages.length,
+    estimateSize: () => 600, // Estimate based on visual size
+    overscan: 2,
+    scrollMargin: offsetTop
+  });
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
@@ -220,42 +237,66 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
               <h3 className="text-sm font-medium text-slate-600 hidden lg:block">
                 PDF Preview
               </h3>
-              {compressedImages.map((image, index) => (
-                <div
-                  key={image.name}
-                  className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${
-                    pdfSettings.imageScaling !== 'fit-img-size'
-                      ? pdfSettings.orientation === 'landscape'
-                        ? 'aspect-[1.414/1]'
-                        : 'aspect-[1/1.414]'
-                      : ''
-                  }`}
-                >
-                  <div className="relative w-full h-full flex items-center justify-center bg-slate-50 p-2">
-                    <div className="absolute top-3 left-3 px-2 py-1 bg-slate-800/80 text-white text-xs rounded-md">
-                      Page {index + 1}
-                    </div>
-                    <img
-                      loading="lazy"
-                      className={imageClassName}
-                      src={image.src}
-                      id={image.name}
-                      alt={image.name}
+
+              <div
+                ref={parentRef}
+                style={{
+                  height: `${virtualizer.getTotalSize() - offsetTop}px`,
+                  width: '100%',
+                  position: 'relative'
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualItem) => {
+                  const image = compressedImages[virtualItem.index];
+                  return (
+                    <div
+                      key={image.name}
+                      data-index={virtualItem.index}
+                      ref={virtualizer.measureElement}
+                      className="absolute top-0 left-0 w-full"
                       style={{
-                        padding: `${pdfSettings.margin}px`,
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit:
-                          pdfSettings.imageScaling === 'cover'
-                            ? 'cover'
-                            : pdfSettings.imageScaling === 'stretch'
-                              ? 'fill'
-                              : 'contain'
+                        transform: `translateY(${virtualItem.start - offsetTop}px)`
                       }}
-                    />
-                  </div>
-                </div>
-              ))}
+                    >
+                      <div className="pb-8">
+                        <div
+                          className={`w-full bg-white shadow-md border border-slate-100 overflow-hidden ${
+                            pdfSettings.imageScaling !== 'fit-img-size'
+                              ? pdfSettings.orientation === 'landscape'
+                                ? 'aspect-[1.414/1]'
+                                : 'aspect-[1/1.414]'
+                              : ''
+                          }`}
+                        >
+                          <div className="relative w-full h-full flex items-center justify-center bg-white p-2">
+                            <div className="absolute top-3 left-3 px-2 py-1 bg-slate-800/80 text-white text-xs rounded-md z-10">
+                              Page {virtualItem.index + 1}
+                            </div>
+                            <img
+                              loading="lazy"
+                              className={imageClassName}
+                              src={image.src}
+                              id={image.name}
+                              alt={image.name}
+                              style={{
+                                padding: `${pdfSettings.margin}px`,
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit:
+                                  pdfSettings.imageScaling === 'cover'
+                                    ? 'cover'
+                                    : pdfSettings.imageScaling === 'stretch'
+                                      ? 'fill'
+                                      : 'contain'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

@@ -1,9 +1,9 @@
 import { CircleDollarSign, Lock, Zap } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { DropzoneRootProps } from 'react-dropzone';
+import { useNavigate } from 'react-router-dom';
 
 import DragAndDropComponent from '../components/DragAndDropC';
-import GridViewC from '../components/GridViewC';
 import HeaderC from '../components/HeaderC';
 import { useImageUpload } from '../hooks/useImageUpload';
 import { useImageStore } from '../stores/imageStore';
@@ -76,7 +76,14 @@ Content.displayName = 'Content';
 const HomePage = () => {
   const { imageIsInputed } = useImageStore();
   const { isLoading, loadingTip } = useUIStore();
-  const { getRootProps, getInputProps, open } = useImageUpload();
+  const { getRootProps, getInputProps } = useImageUpload();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (imageIsInputed) {
+      navigate('/editor');
+    }
+  }, [imageIsInputed, navigate]);
 
   return (
     <div className="relative flex size-full min-h-screen flex-col bg-gradient-to-br from-slate-50 to-slate-100 overflow-x-hidden">
@@ -98,10 +105,7 @@ const HomePage = () => {
 
       <div className="flex h-full grow flex-col">
         <HeaderC />
-        {!imageIsInputed && (
-          <Content getRootProps={getRootProps} getInputProps={getInputProps} />
-        )}
-        {imageIsInputed && <GridViewC onAddMoreImages={open} />}
+        <Content getRootProps={getRootProps} getInputProps={getInputProps} />
       </div>
     </div>
   );
