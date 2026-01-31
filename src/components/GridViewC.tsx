@@ -90,7 +90,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
     convertToPDF();
   }, [convertToPDF]);
 
-  const { imageScaling } = pdfSettings;
+  const { imageScaling, imagesPerPage = 1 } = pdfSettings;
 
   const imageClassName = useMemo(() => {
     return `w-full ${
@@ -112,7 +112,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
   }, []);
 
   const virtualizer = useWindowVirtualizer({
-    count: compressedImages.length,
+    count: Math.ceil(compressedImages.length / imagesPerPage),
     estimateSize: () => 600, // Estimate based on visual size
     overscan: 2,
     scrollMargin: offsetTop
@@ -247,10 +247,14 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
                 }}
               >
                 {virtualizer.getVirtualItems().map((virtualItem) => {
-                  const image = compressedImages[virtualItem.index];
+                  const startIndex = virtualItem.index * imagesPerPage;
+                  const pageImages = compressedImages.slice(
+                    startIndex,
+                    startIndex + imagesPerPage
+                  );
                   return (
                     <div
-                      key={image.name}
+                      key={virtualItem.index}
                       data-index={virtualItem.index}
                       ref={virtualizer.measureElement}
                       className="absolute top-0 left-0 w-full"
@@ -268,28 +272,39 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
                               : ''
                           }`}
                         >
-                          <div className="relative w-full h-full flex items-center justify-center bg-white p-2">
+                          <div className="relative w-full h-full flex flex-col bg-white p-2">
                             <div className="absolute top-3 left-3 px-2 py-1 bg-slate-800/80 text-white text-xs rounded-md z-10">
                               Page {virtualItem.index + 1}
                             </div>
-                            <img
-                              loading="lazy"
-                              className={imageClassName}
-                              src={image.src}
-                              id={image.name}
-                              alt={image.name}
-                              style={{
-                                padding: `${pdfSettings.margin}px`,
-                                maxWidth: '100%',
-                                maxHeight: '100%',
-                                objectFit:
-                                  pdfSettings.imageScaling === 'cover'
-                                    ? 'cover'
-                                    : pdfSettings.imageScaling === 'stretch'
-                                      ? 'fill'
-                                      : 'contain'
-                              }}
-                            />
+                            {pageImages.map((image) => (
+                              <div
+                                key={image.name}
+                                className={`relative w-full ${
+                                  imagesPerPage === 2 ? 'h-1/2' : 'h-full'
+                                } flex items-center justify-center`}
+                                style={{
+                                  padding: `${pdfSettings.margin}px`
+                                }}
+                              >
+                                <img
+                                  loading="lazy"
+                                  className={imageClassName}
+                                  src={image.src}
+                                  id={image.name}
+                                  alt={image.name}
+                                  style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '100%',
+                                    objectFit:
+                                      pdfSettings.imageScaling === 'cover'
+                                        ? 'cover'
+                                        : pdfSettings.imageScaling === 'stretch'
+                                          ? 'fill'
+                                          : 'contain'
+                                  }}
+                                />
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>

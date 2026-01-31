@@ -54,6 +54,19 @@ const ControlPanel = memo<ControlPanelProps>(
           onChange={(value) => updatePDFSettings({ imageScaling: value })}
         />
 
+        {/* Images per Page */}
+        <DropdownC
+          label="Images per Page"
+          value={String(pdfSettings.imagesPerPage ?? 1)}
+          elements={[
+            { element: '1 Image per Page', value: '1' },
+            { element: '2 Images per Page', value: '2' }
+          ]}
+          onChange={(value) =>
+            updatePDFSettings({ imagesPerPage: Number(value) as 1 | 2 })
+          }
+        />
+
         {/* Page Size */}
         <DropdownC
           label="Page Size"

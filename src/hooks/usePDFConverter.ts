@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
 import jsPDF from 'jspdf';
-import { useImageStore, ImageItem } from '../stores/imageStore';
+import { useCallback } from 'react';
+import { useImageStore } from '../stores/imageStore';
 import { useUIStore } from '../stores/uiStore';
 
 // Page size dimensions in mm
@@ -9,42 +9,79 @@ const PAGE_SIZES: Record<string, { width: number; height: number }> = {
   letter: { width: 215.9, height: 279.4 },
   legal: { width: 215.9, height: 355.6 },
   a3: { width: 297, height: 420 },
-  a5: { width: 148, height: 210 },
+  a5: { width: 148, height: 210 }
 };
 
 export function usePDFConverter() {
   const { images } = useImageStore();
   const { setLoading, setLoadingTip, pdfSettings } = useUIStore();
 
-  const convertToPDF = useCallback(() => {
+  const convertToPDF = useCallback(async () => {
     if (images.length === 0) return;
 
-    setLoading(true, 'Converting images to PDF...');
+    setLoading(true, 'Preparing images...');
 
-    const { pageSize, orientation, margin, fileName, imageScaling } = pdfSettings;
+    const {
+      pageSize,
+      orientation,
+      margin,
+      fileName,
+      imageScaling,
+      imagesPerPage = 1
+    } = pdfSettings;
     const pageDimensions = PAGE_SIZES[pageSize] || PAGE_SIZES.a4;
 
     // Swap dimensions for landscape
-    const pageWidth = orientation === 'landscape' ? pageDimensions.height : pageDimensions.width;
-    const pageHeight = orientation === 'landscape' ? pageDimensions.width : pageDimensions.height;
+    const pageWidth =
+      orientation === 'landscape'
+        ? pageDimensions.height
+        : pageDimensions.width;
+    const pageHeight =
+      orientation === 'landscape'
+        ? pageDimensions.width
+        : pageDimensions.height;
 
-    let pdf = new jsPDF({
+    // Load all images first
+    const loadedImages = await Promise.all(
+      images.map(
+        (image) =>
+          new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.src = image.src;
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+          })
+      )
+    );
+
+    const pdf = new jsPDF({
       orientation: orientation === 'landscape' ? 'l' : 'p',
       unit: 'mm',
-      format: [pageWidth, pageHeight],
+      format: [pageWidth, pageHeight]
     });
 
-    let processedCount = 0;
+    let currentImageIndex = 0;
 
-    const processImage = (image: ImageItem, index: number) => {
-      const img = new Image();
-      img.src = image.src;
+    while (currentImageIndex < loadedImages.length) {
+      if (currentImageIndex > 0) {
+        pdf.addPage();
+      }
 
-      img.onload = () => {
-        const pdfWidth = pageWidth;
-        const pdfHeight = pageHeight;
-        const availableWidth = pdfWidth - margin * 2;
-        const availableHeight = pdfHeight - margin * 2;
+      const pageImages = loadedImages.slice(
+        currentImageIndex,
+        currentImageIndex + imagesPerPage
+      );
+
+      // Height available for each image slot
+      const slotHeight = pageHeight / (imagesPerPage === 2 ? 2 : 1);
+
+      pageImages.forEach((img, idx) => {
+        // Calculate available space for this image slot
+        const availableWidth = pageWidth - margin * 2;
+        const availableHeight = slotHeight - margin * 2;
+
+        // Slot position offset
+        const yOffset = idx * slotHeight;
 
         const imgWidth = img.width;
         const imgHeight = img.height;
@@ -52,87 +89,90 @@ export function usePDFConverter() {
         let scaledWidth = imgWidth;
         let scaledHeight = imgHeight;
         let x = margin;
-        let y = margin;
+        let y = margin + yOffset;
 
-        if (imageScaling === 'fit-img-size') {
-          // Adjust page size to fit image
-          let newPageWidth = pdfWidth;
-          let newPageHeight = pdfHeight;
+        if (imageScaling === 'fit-img-size' && imagesPerPage === 1) {
+          // Special case for fit-img-size with 1 image per page (resize page)
+          // We can't resize page easily for 2 images per page, so fallback to default fit for 2 images
+          if (imagesPerPage === 1) {
+            let newPageWidth = pageWidth;
+            let newPageHeight = pageHeight;
 
-          if (imgWidth / imgHeight > pdfWidth / pdfHeight) {
-            newPageHeight = (pdfWidth * imgHeight) / imgWidth;
-          } else {
-            newPageWidth = (pdfHeight * imgWidth) / imgHeight;
-          }
+            if (imgWidth / imgHeight > pageWidth / pageHeight) {
+              newPageHeight = (pageWidth * imgHeight) / imgWidth;
+            } else {
+              newPageWidth = (pageHeight * imgWidth) / imgHeight;
+            }
 
-          if (index > 0) {
+            // Resize current page
+            pdf.deletePage(pdf.getNumberOfPages());
             pdf.addPage(
               [newPageWidth, newPageHeight],
               newPageWidth > newPageHeight ? 'l' : 'p'
             );
-          } else {
-            pdf = new jsPDF({
-              orientation: newPageWidth > newPageHeight ? 'l' : 'p',
-              unit: 'mm',
-              format: [newPageWidth, newPageHeight],
-            });
+
+            scaledWidth = newPageWidth;
+            scaledHeight = newPageHeight;
+            x = 0;
+            y = 0;
           }
-          scaledWidth = newPageWidth;
-          scaledHeight = newPageHeight;
-          x = 0;
-          y = 0;
-        } else if (imageScaling === 'default') {
-          // Fit image within available space maintaining aspect ratio
-          const ratio = Math.min(availableWidth / imgWidth, availableHeight / imgHeight);
+        } else if (
+          imageScaling === 'default' ||
+          (imageScaling === 'fit-img-size' && imagesPerPage > 1)
+        ) {
+          // Default fit behavior
+          const ratio = Math.min(
+            availableWidth / imgWidth,
+            availableHeight / imgHeight
+          );
           scaledWidth = imgWidth * ratio;
           scaledHeight = imgHeight * ratio;
           x = margin + (availableWidth - scaledWidth) / 2;
-          y = margin + (availableHeight - scaledHeight) / 2;
-
-          if (index > 0) {
-            pdf.addPage();
-          }
+          y = margin + yOffset + (availableHeight - scaledHeight) / 2;
         } else if (imageScaling === 'cover') {
-          // Cover the page (may crop)
-          const ratio = Math.max(availableWidth / imgWidth, availableHeight / imgHeight);
+          const ratio = Math.max(
+            availableWidth / imgWidth,
+            availableHeight / imgHeight
+          );
           scaledWidth = imgWidth * ratio;
           scaledHeight = imgHeight * ratio;
           x = margin + (availableWidth - scaledWidth) / 2;
-          y = margin + (availableHeight - scaledHeight) / 2;
-
-          if (index > 0) {
-            pdf.addPage();
-          }
+          y = margin + yOffset + (availableHeight - scaledHeight) / 2;
         } else if (imageScaling === 'stretch') {
-          // Stretch to fill available space
           scaledWidth = availableWidth;
           scaledHeight = availableHeight;
           x = margin;
-          y = margin;
-
-          if (index > 0) {
-            pdf.addPage();
-          }
+          y = margin + yOffset;
         }
 
-        // Detect image format from data URL
-        const format = image.src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        pdf.addImage(img, format, x, y, scaledWidth, scaledHeight, undefined, 'MEDIUM');
+        // Detect image format
+        // Note: We use original image.src to detect format, assuming index matches
+        const originalSrc = images[currentImageIndex + idx].src;
+        const format = originalSrc.startsWith('data:image/png')
+          ? 'PNG'
+          : 'JPEG';
 
-        processedCount++;
-        setLoadingTip(`Processing ${processedCount}/${images.length} images...`);
+        pdf.addImage(
+          img,
+          format,
+          x,
+          y,
+          scaledWidth,
+          scaledHeight,
+          undefined,
+          'MEDIUM'
+        );
+      });
 
-        if (processedCount === images.length) {
-          const finalFileName = fileName.trim() || 'result';
-          pdf.save(`${finalFileName}.pdf`);
-          setLoading(false);
-        }
-      };
-    };
+      currentImageIndex += imagesPerPage;
+      setLoadingTip(
+        `Processing images... ${Math.min(currentImageIndex, images.length)}/${images.length}`
+      );
+    }
 
-    images.forEach((image, index) => {
-      processImage(image, index);
-    });
+    const finalFileName = fileName.trim() || 'result';
+    pdf.save(`${finalFileName}.pdf`);
+    setLoading(false);
   }, [images, pdfSettings, setLoading, setLoadingTip]);
 
   return { convertToPDF };

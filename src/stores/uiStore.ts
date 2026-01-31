@@ -7,6 +7,7 @@ interface PDFSettings {
   quality: string;
   fileName: string;
   imageScaling: string;
+  imagesPerPage: 1 | 2;
 }
 
 interface UIState {
@@ -14,7 +15,7 @@ interface UIState {
   loadingTip: string;
   showMobilePanel: boolean;
   pdfSettings: PDFSettings;
-  
+
   // Actions
   setLoading: (isLoading: boolean, tip?: string) => void;
   setLoadingTip: (tip: string) => void;
@@ -30,6 +31,7 @@ const defaultPDFSettings: PDFSettings = {
   quality: 'high',
   fileName: 'result',
   imageScaling: 'default',
+  imagesPerPage: 1
 };
 
 export const useUIStore = create<UIState>((set) => ({
@@ -38,18 +40,20 @@ export const useUIStore = create<UIState>((set) => ({
   showMobilePanel: false,
   pdfSettings: { ...defaultPDFSettings },
 
-  setLoading: (isLoading, tip) => set({ 
-    isLoading, 
-    loadingTip: tip ?? (isLoading ? 'Please Wait' : '') 
-  }),
+  setLoading: (isLoading, tip) =>
+    set({
+      isLoading,
+      loadingTip: tip ?? (isLoading ? 'Please Wait' : '')
+    }),
 
   setLoadingTip: (tip) => set({ loadingTip: tip }),
 
   setShowMobilePanel: (show) => set({ showMobilePanel: show }),
 
-  updatePDFSettings: (settings) => set((state) => ({
-    pdfSettings: { ...state.pdfSettings, ...settings }
-  })),
+  updatePDFSettings: (settings) =>
+    set((state) => ({
+      pdfSettings: { ...state.pdfSettings, ...settings }
+    })),
 
-  resetPDFSettings: () => set({ pdfSettings: { ...defaultPDFSettings } }),
+  resetPDFSettings: () => set({ pdfSettings: { ...defaultPDFSettings } })
 }));
