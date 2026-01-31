@@ -1,71 +1,68 @@
-import Swal from "sweetalert2";
-import CButton from "./BaseButtonC";
+import { FileText, Info } from 'lucide-react';
+import { memo, useCallback } from 'react';
+import Swal from 'sweetalert2';
 
-const reloadPage = () => {
-  window.location.reload();
-};
+const HeaderC = memo(() => {
+  const reloadPage = useCallback(() => {
+    window.location.reload();
+  }, []);
 
-const HeaderC = () => {
+  const showAbout = useCallback(() => {
+    Swal.fire({
+      title: 'About Image2PDF',
+      html: `
+      <div class="text-left text-slate-600 space-y-3">
+        <p class="text-base">The easiest way to convert images to PDF with just a few clicks!</p>
+        <p class="text-sm">Image2PDF offers a seamless and efficient way to transform your images into high-quality PDF documents.</p>
+        <div class="pt-3 border-t border-slate-200">
+          <p class="text-sm">Developed by 
+            <a href="https://github.com/KidiXDev" 
+               target="_blank" 
+               class="text-primary-600 font-medium hover:underline">
+              @KidiXDev
+            </a>
+          </p>
+        </div>
+      </div>`,
+      icon: 'info',
+      confirmButtonText: 'Close',
+      customClass: {
+        popup: 'rounded-2xl shadow-xl',
+        title: 'text-xl font-bold text-slate-800',
+        confirmButton:
+          'bg-primary-600 text-white px-6 py-2.5 rounded-lg font-medium'
+      },
+      width: 'auto',
+      backdrop: 'rgba(15, 23, 42, 0.4)'
+    });
+  }, []);
+
   return (
-    <header className="flex w-full items-center justify-between whitespace-nowrap border-b border-solid bg-white z-10 border-b-[#e7edf3] px-10 py-3 shadow-md fixed">
-      <div className="flex items-center gap-4 text-[#0e141b]">
-        <button onClick={reloadPage}>
-          <div className="flex items-center gap-4">
-            <div className="size-4">
-              <svg
-                width="16"
-                height="16"
-                version="1.1"
-                viewBox="0 0 4.2333 4.2333"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g strokeWidth="1.2506">
-                  <path d="m0.58151 0h2.1204c0.20142 0 0.36356 0.16215 0.36356 0.36356v3.0696c0 0.20141-0.16214 0.36356-0.36356 0.36356h-2.1204c-0.20141 0-0.36356-0.16215-0.36356-0.36356v-3.0696c0-0.20141 0.16215-0.36356 0.36356-0.36356z" />
-                  <path d="m1.512 0.43657h2.1205c0.20141 0 0.36356 0.16215 0.36356 0.36356v3.0696c0 0.20142-0.16215 0.36356-0.36356 0.36356h-2.1205c-0.20141 0-0.36356-0.16214-0.36356-0.36356v-3.0696c0-0.20141 0.16215-0.36356 0.36356-0.36356z" />
-                  <path
-                    d="m1.4478 0.36019h2.0961c0.20815 0 0.37572 0.16757 0.37572 0.37572v3.0453c0 0.20815-0.16757 0.37572-0.37572 0.37572h-2.0961c-0.20815 0-0.37572-0.16757-0.37572-0.37572v-3.0453c0-0.20815 0.16757-0.37572 0.37572-0.37572z"
-                    fill="#fff"
-                  />
-                </g>
-              </svg>
-            </div>
-            <h2 className="text-[#0e141b] text-lg font-bold leading-tight tracking-[-0.015em]">
-              Image2PDF
-            </h2>
+    <header className="flex w-full items-center justify-between whitespace-nowrap bg-white/80 backdrop-blur-md z-10 border-b border-slate-200/60 px-4 sm:px-6 lg:px-10 py-3 shadow-sm fixed top-0 left-0 right-0">
+      <div className="flex items-center gap-3 text-slate-800">
+        <button
+          onClick={reloadPage}
+          className="flex items-center gap-3 transition-smooth"
+        >
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 shadow-sm">
+            <FileText className="w-5 h-5 text-white" />
           </div>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800">
+            Image2PDF
+          </h1>
         </button>
       </div>
-      <CButton
-        text="About"
-        onClick={() =>
-          Swal.fire({
-            title: "About Image2PDF",
-            html: `
-      <div class="text-justify">
-        <p>Easiest way to convert images to PDF with just a few clicks!</p>
-        <p>Image2PDF offers a seamless and efficient way to <br/>transform your images into high-quality PDF documents.</p>
-        <br/>
-        <p>This site was developed by 
-          <a href="https://github.com/KidiXDev" 
-             target="_blank" 
-             class="text-green-700 hover:text-green-500 hover:underline transition">
-            @KidiXDev
-          </a>
-      </div>`,
-            icon: "info",
-            confirmButtonText: "Close",
-            customClass: {
-              popup: "bg-white shadow-lg rounded-lg",
-              title: "text-lg font-semibold",
-              confirmButton:
-                "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700",
-            },
-            width: "auto",
-          })
-        }
-      />
+      <button
+        onClick={showAbout}
+        className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg transition-smooth"
+      >
+        <Info className="w-4 h-4" />
+        <span className="hidden sm:inline">About</span>
+      </button>
     </header>
   );
-};
+});
+
+HeaderC.displayName = 'HeaderC';
 
 export default HeaderC;

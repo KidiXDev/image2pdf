@@ -1,28 +1,41 @@
 interface ICButtonProps {
   text: string;
-  bgColor?: string;
-  hoverColor?: string;
+  variant?: "primary" | "secondary" | "danger";
+  size?: "sm" | "md" | "lg";
+  fullWidth?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }
 
 const CButton = ({
   text,
-  bgColor = "#e7edf3",
-  hoverColor = "#dfe5eb",
+  variant = "secondary",
+  size = "md",
+  fullWidth = false,
+  disabled = false,
   onClick,
 }: ICButtonProps) => {
+  const baseStyles = "inline-flex items-center justify-center font-medium rounded-lg transition-smooth disabled:opacity-50 disabled:cursor-not-allowed";
+  
+  const variantStyles = {
+    primary: "bg-primary-600 text-white shadow-sm",
+    secondary: "bg-slate-100 text-slate-700",
+    danger: "bg-red-50 text-red-600",
+  };
+  
+  const sizeStyles = {
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-4 py-2 text-sm",
+    lg: "px-6 py-2.5 text-base",
+  };
+
   return (
     <button
       onClick={onClick}
-      className={`flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 transition-colors text-[#0e141b] text-sm font-bold leading-normal tracking-[0.015em]`}
-      style={{
-        backgroundColor: bgColor,
-        color: "#0e141b",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hoverColor)}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = bgColor)}
+      disabled={disabled}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${fullWidth ? "w-full" : ""}`}
     >
-      <span className="truncate">{text}</span>
+      {text}
     </button>
   );
 };

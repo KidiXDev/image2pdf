@@ -1,260 +1,384 @@
 import {
   DragDropContext,
-  Droppable,
   Draggable,
-  DropResult,
-} from "@hello-pangea/dnd";
+  Droppable,
+  DropResult
+} from '@hello-pangea/dnd';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { Download, Settings, X } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import CButton from "./BaseButtonC";
-import ConvertC from "./ConvertC";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import DropdownC from "./DropdownC";
-import ContextMenu from "./ContextMenu";
-
-interface ImageItem {
-  src: string;
-  name: string;
-}
+import { useContextMenu } from '../hooks/useContextMenu';
+import { usePDFConverter } from '../hooks/usePDFConverter';
+import { useImageStore } from '../stores/imageStore';
+import { useUIStore } from '../stores/uiStore';
+import ContextMenu from './ContextMenu';
+import ControlPanel from './ControlPanel';
+import ConvertC from './ConvertC';
 
 interface GridViewProps {
-  images: ImageItem[];
-  setImages: React.Dispatch<React.SetStateAction<ImageItem[]>>;
-  compressedImages: ImageItem[];
-  setCompressedImages: React.Dispatch<React.SetStateAction<ImageItem[]>>;
-
-  convertImage?: (configValue: string) => void;
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  onAddMoreImages?: () => void;
 }
 
-const GridViewC: React.FC<GridViewProps> = ({
-  images,
-  setImages,
-  compressedImages,
-  setCompressedImages,
-  convertImage,
-  setIsLoading,
-}) => {
-  const [configValue, setConfigValue] = useState("default");
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [contextMenuItemIndex, setContextMenuItemIndex] = useState(0);
+const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
+  const {
+    images,
+    compressedImages,
+    reorderImages,
+    deleteImage,
+    moveToTop,
+    moveToBottom,
+    clearAll
+  } = useImageStore();
 
-  const handleContextMenu = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
-    setMenuPosition({ x: e.pageX, y: e.pageY });
-    setMenuVisible(true);
-  };
+  const { showMobilePanel, setShowMobilePanel, pdfSettings, setLoading } =
+    useUIStore();
+
+  const contextMenu = useContextMenu();
+  const { convertToPDF } = usePDFConverter();
 
   useEffect(() => {
-    const handleCloseMenu = () => {
-      setMenuVisible(false);
-    };
-
-    if (images.length <= 0 || compressedImages.length <= 0) {
-      window.location.href = "/";
-      return;
+    if (images.length === 0 || compressedImages.length === 0) {
+      clearAll();
     }
+  }, [images.length, compressedImages.length, clearAll]);
 
-    window.addEventListener("click", handleCloseMenu);
-    window.addEventListener("scroll", handleCloseMenu);
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) return;
+      reorderImages(result.source.index, result.destination.index);
+    },
+    [reorderImages]
+  );
 
-    return () => {
-      window.removeEventListener("click", handleCloseMenu);
-      window.removeEventListener("scroll", handleCloseMenu);
-    };
-  }, [images, compressedImages]);
-
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const reorderedCompressedImages = Array.from(compressedImages);
-    const [removed] = reorderedCompressedImages.splice(result.source.index, 1);
-    reorderedCompressedImages.splice(result.destination.index, 0, removed);
-
-    const reorderedImages = reorderedCompressedImages.map(
-      (image) => images.find((img) => img.name === image.name)!
-    );
-
-    setCompressedImages(reorderedCompressedImages);
-    setImages(reorderedImages);
-  };
-
-  const handleClick = (id: string) => {
+  const handleClick = useCallback((id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  };
+  }, []);
 
-  const className = `w-full ${
-    configValue === "cover"
-      ? "h-full object-cover"
-      : configValue === "stretch"
-      ? "h-full"
-      : "h-fit"
-  }`;
+  const handleContextMenuAction = useCallback(
+    (action: 'moveToTop' | 'moveToBottom' | 'delete') => {
+      const selectedIdx = contextMenu.selectedIndex;
+      if (selectedIdx === null) return;
 
-  const handleContextMenuItemAction = (
-    action: "moveToTop" | "moveToBottom" | "delete"
-  ) => {
-    switch (action) {
-      case "moveToTop": {
-        setIsLoading(true);
-        requestAnimationFrame(() => {
-          const reorderedCompressedImages = Array.from(compressedImages);
-          const [removed] = reorderedCompressedImages.splice(
-            contextMenuItemIndex,
-            1
-          );
-          reorderedCompressedImages.splice(0, 0, removed);
+      contextMenu.hide();
 
-          const reorderedImages = reorderedCompressedImages.map(
-            (image) => images.find((img) => img.name === image.name)!
-          );
+      setLoading(true);
+      requestAnimationFrame(() => {
+        switch (action) {
+          case 'moveToTop':
+            moveToTop(selectedIdx);
+            break;
+          case 'moveToBottom':
+            moveToBottom(selectedIdx);
+            break;
+          case 'delete':
+            deleteImage(selectedIdx);
+            break;
+        }
+        setLoading(false);
+      });
+    },
+    [contextMenu, moveToTop, moveToBottom, deleteImage, setLoading]
+  );
 
-          setCompressedImages(reorderedCompressedImages);
-          setImages(reorderedImages);
-          setIsLoading(false);
-        });
-        break;
-      }
-      case "moveToBottom": {
-        setIsLoading(true);
-        requestAnimationFrame(() => {
-          const reorderedCompressedImages = Array.from(compressedImages);
-          const [removed] = reorderedCompressedImages.splice(
-            contextMenuItemIndex,
-            1
-          );
-          reorderedCompressedImages.splice(
-            reorderedCompressedImages.length,
-            0,
-            removed
-          );
+  const handleConvert = useCallback(() => {
+    convertToPDF();
+  }, [convertToPDF]);
 
-          const reorderedImages = reorderedCompressedImages.map(
-            (image) => images.find((img) => img.name === image.name)!
-          );
+  const { imageScaling, imagesPerPage = 1 } = pdfSettings;
 
-          setCompressedImages(reorderedCompressedImages);
-          setImages(reorderedImages);
-          setIsLoading(false);
-        });
-        break;
-      }
-      case "delete": {
-        setIsLoading(true);
-        requestAnimationFrame(() => {
-          const reorderedCompressedImages = Array.from(compressedImages);
-          reorderedCompressedImages.splice(contextMenuItemIndex, 1);
-          setCompressedImages(reorderedCompressedImages);
+  const imageClassName = useMemo(() => {
+    return `w-full ${
+      imageScaling === 'cover'
+        ? 'h-full object-cover'
+        : imageScaling === 'stretch'
+          ? 'h-full'
+          : 'h-fit'
+    }`;
+  }, [imageScaling]);
 
-          const reorderedImages = reorderedCompressedImages.map(
-            (image) => images.find((img) => img.name === image.name)!
-          );
-          setImages(reorderedImages);
-          setIsLoading(false);
-        });
-        break;
-      }
+  const parentRef = useRef<HTMLDivElement>(null);
+  const [offsetTop, setOffsetTop] = useState(0);
+
+  useEffect(() => {
+    if (parentRef.current) {
+      setOffsetTop(parentRef.current.offsetTop);
     }
-  };
+  }, []);
+
+  const virtualizer = useWindowVirtualizer({
+    count: Math.ceil(compressedImages.length / imagesPerPage),
+    estimateSize: () => 600,
+    overscan: 2,
+    scrollMargin: offsetTop
+  });
 
   return (
-    <div className="flex">
+    <div className="flex flex-col lg:flex-row min-h-screen">
       <div
-        className="px-10 max-px py-5 h-screen left-0 mt-16 overflow-auto fixed"
-        style={{ height: "calc(100vh - 4rem)" }}
+        className="hidden lg:block fixed left-0 top-0 mt-14 w-64 xl:w-72 bg-white/80 backdrop-blur-sm border-r border-slate-200 overflow-y-auto scrollbar-thin"
+        style={{ height: 'calc(100vh - 3.5rem)' }}
       >
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="grid" direction="vertical">
-            {(provided) => (
-              <div
-                className="grid grid-cols-1 gap-4 mb-24"
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                {compressedImages.map((image, index) => (
-                  <Draggable
-                    key={`${image.name}-${index}`}
-                    draggableId={`${image.name}-${index}`}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        onClick={() => {
-                          handleClick(image.name);
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          handleContextMenu(e);
-                          setContextMenuItemIndex(index);
-                        }}
-                      >
-                        <ConvertC imageSrc={image.src} imageName={image.name} />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </div>
-      <div className="flex-col mx-auto justify-center mt-16 hidden md:block">
-        {compressedImages.map((image) => (
-          <div
-            className={`sm:w-[400px] md:w-[600px] lg:w-[588px] h-auto bg-white shadow-lg border border-gray-300 block content-center mt-10 mb-16 mr-80 mx-36 ${
-              configValue !== "fit-img-size" && "aspect-[1/1.414]"
-            }`}
-          >
-            <img
-              loading="lazy"
-              className={className}
-              src={image.src}
-              id={image.name}
-              alt={image.name}
-            />
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-800">
+              Images ({compressedImages.length})
+            </h2>
           </div>
-        ))}
+
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="grid" direction="vertical">
+              {(provided) => (
+                <div
+                  className="space-y-3"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  {compressedImages.map((image, index) => (
+                    <Draggable
+                      key={`${image.name}-${index}`}
+                      draggableId={`${image.name}-${index}`}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          onClick={() => handleClick(image.name)}
+                          onContextMenu={(e) => contextMenu.show(e, index)}
+                          className={`${snapshot.isDragging ? 'opacity-80 shadow-lg' : ''}`}
+                        >
+                          <ConvertC
+                            imageSrc={image.src}
+                            imageName={image.name}
+                            index={index}
+                            width={140}
+                            height={180}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
       </div>
 
-      {menuVisible && (
-        <div
-          className="w-fit absolute"
-          style={{ top: menuPosition.y, left: menuPosition.x }}
-        >
-          <ContextMenu onAction={handleContextMenuItemAction} />
+      <div className="flex-1 lg:ml-64 xl:ml-72 lg:mr-80 mt-14 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="lg:hidden">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-slate-800">
+                  Images ({compressedImages.length})
+                </h2>
+                <button
+                  onClick={() => setShowMobilePanel(true)}
+                  className="px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded-lg flex items-center gap-1.5"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Settings
+                </button>
+              </div>
+              <DragDropContext onDragEnd={onDragEnd}>
+                <Droppable droppableId="mobile-grid" direction="horizontal">
+                  {(provided) => (
+                    <div
+                      className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin"
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                    >
+                      {compressedImages.map((image, index) => (
+                        <Draggable
+                          key={`mobile-${image.name}-${index}`}
+                          draggableId={`mobile-${image.name}-${index}`}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => handleClick(image.name)}
+                              className="flex-shrink-0"
+                            >
+                              <ConvertC
+                                imageSrc={image.src}
+                                imageName={image.name}
+                                index={index}
+                                width={80}
+                                height={100}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </div>
+
+            {/* Preview Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-slate-600 hidden lg:block">
+                PDF Preview
+              </h3>
+
+              <div
+                ref={parentRef}
+                style={{
+                  height: `${virtualizer.getTotalSize() - offsetTop}px`,
+                  width: '100%',
+                  position: 'relative'
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualItem) => {
+                  const startIndex = virtualItem.index * imagesPerPage;
+                  const pageImages = compressedImages.slice(
+                    startIndex,
+                    startIndex + imagesPerPage
+                  );
+                  return (
+                    <div
+                      key={virtualItem.index}
+                      data-index={virtualItem.index}
+                      ref={virtualizer.measureElement}
+                      className="absolute top-0 left-0 w-full"
+                      style={{
+                        transform: `translateY(${virtualItem.start - offsetTop}px)`
+                      }}
+                    >
+                      <div className="pb-8">
+                        <div
+                          className={`w-full bg-white shadow-md border border-slate-100 overflow-hidden ${
+                            pdfSettings.imageScaling !== 'fit-img-size'
+                              ? pdfSettings.orientation === 'landscape'
+                                ? 'aspect-[1.414/1]'
+                                : 'aspect-[1/1.414]'
+                              : ''
+                          }`}
+                        >
+                          <div className="relative w-full h-full flex flex-col bg-white p-2">
+                            <div className="absolute top-3 left-3 px-2 py-1 bg-slate-800/80 text-white text-xs rounded-md z-10">
+                              Page {virtualItem.index + 1}
+                            </div>
+                            {pageImages.map((image) => (
+                              <div
+                                key={image.name}
+                                className={`relative w-full ${
+                                  imagesPerPage === 2 ? 'h-1/2' : 'h-full'
+                                } flex items-center justify-center`}
+                                style={{
+                                  padding: `${pdfSettings.margin}px`
+                                }}
+                              >
+                                <img
+                                  loading="lazy"
+                                  className={imageClassName}
+                                  src={image.src}
+                                  id={image.name}
+                                  alt={image.name}
+                                  style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '100%',
+                                    objectFit:
+                                      pdfSettings.imageScaling === 'cover'
+                                        ? 'cover'
+                                        : pdfSettings.imageScaling === 'stretch'
+                                          ? 'fill'
+                                          : 'contain'
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="hidden lg:block fixed right-0 top-0 mt-14 w-80 bg-white/80 backdrop-blur-sm border-l border-slate-200 overflow-y-auto scrollbar-thin"
+        style={{ height: 'calc(100vh - 3.5rem)' }}
+      >
+        <div className="p-5">
+          <h2 className="text-lg font-semibold text-slate-800 mb-5">
+            Settings
+          </h2>
+          <ControlPanel
+            onConvert={handleConvert}
+            onAddMoreImages={onAddMoreImages}
+          />
+        </div>
+      </div>
+
+      {showMobilePanel && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-slate-900/50"
+            onClick={() => setShowMobilePanel(false)}
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-800">Settings</h3>
+              <button
+                onClick={() => setShowMobilePanel(false)}
+                className="p-2 text-slate-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <ControlPanel
+                isMobile
+                onConvert={handleConvert}
+                onAddMoreImages={onAddMoreImages}
+              />
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="right-0 h-full fixed w-3/12 shadow-xl px-10 py-14 mt-10 bg-[#fafafafa] hidden md:block">
-        <h1 className="text-2xl mb-10">Control Panel</h1>
-        <span>Image Size</span>
-        <DropdownC
-          elements={[
-            { element: "Default", value: "default" },
-            { element: "Cover", value: "cover" },
-            { element: "Stretch", value: "stretch" },
-            { element: "Fit Image Size", value: "fit-img-size" },
-          ]}
-          onChange={(value) => setConfigValue(value)}
-        />
-
+      {contextMenu.isRendered && (
         <div
-          className="w-fit"
-          onClick={() => convertImage && convertImage(configValue)}
+          className="fixed z-50"
+          style={{ top: contextMenu.position.y, left: contextMenu.position.x }}
         >
-          <CButton text="Convert" />
+          <ContextMenu
+            onAction={handleContextMenuAction}
+            isVisible={contextMenu.isVisible}
+          />
         </div>
+      )}
+
+      <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40">
+        <button
+          onClick={handleConvert}
+          className="w-full px-4 py-3.5 bg-primary-600 text-white text-sm font-medium rounded-xl shadow-lg flex items-center justify-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Convert to PDF
+        </button>
       </div>
     </div>
   );
-};
+});
+
+GridViewC.displayName = 'GridViewC';
 
 export default GridViewC;

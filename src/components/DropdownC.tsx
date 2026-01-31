@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { memo, useCallback, useState, useRef, useEffect } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 interface ElementProps {
   element: string;
@@ -7,67 +8,84 @@ interface ElementProps {
 
 interface DropdownCProps {
   elements: ElementProps[];
-  onChange?: (element: string) => void;
-  selectedValue?: string;
+  onChange?: (value: string) => void;
+  value?: string;
+  label?: string;
 }
 
-const DropdownC = ({ elements, onChange }: DropdownCProps) => {
-  const [placeholderValue, setPlaceholderValue] = useState(elements[0].element);
+const DropdownC = memo<DropdownCProps>(({ elements, onChange, value, label }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const showDropDown = () => {
-    document.getElementById("dropdown")!.classList.toggle("hidden");
-  };
+  // Get the display text for the current value
+  const selectedElement = elements.find(el => el.value === value) || elements[0];
+  const displayText = selectedElement.element;
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggle = useCallback(() => setIsOpen(prev => !prev), []);
+  
+  const handleSelect = useCallback((selectedValue: string) => {
+    setIsOpen(false);
+    onChange?.(selectedValue);
+  }, [onChange]);
 
   return (
-    <div className="relative text-left">
-      <div className="my-5">
-        <button
-          type="button"
-          className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-          id="menu-button"
-          aria-expanded="true"
-          aria-haspopup="true"
-          onClick={showDropDown}
-        >
-          {placeholderValue}
-          <svg
-            className="-mr-1 h-5 w-5 text-gray-400"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </button>
-        <div
-          className="absolute right-0 z-10 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden"
-          role="menu"
-          aria-orientation="vertical"
-          aria-labelledby="menu-button"
-          id="dropdown"
-        >
-          <div className="py-1">
-            {elements.map((element) => (
-              <button
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 w-full"
-                role="menuitem"
-                onClick={() => {
-                  setPlaceholderValue(element.element);
-                  onChange!(element.value);
-                  showDropDown();
-                }}
-              >
-                {element.element}
-              </button>
-            ))}
-          </div>
+    <div className="relative" ref={dropdownRef}>
+      {label && (
+        <label className="block text-xs font-medium text-slate-500 mb-1.5">
+          {label}
+        </label>
+      )}
+      <button
+        type="button"
+        className="w-full flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2.5 text-sm text-slate-700 border border-slate-200 shadow-sm transition-all duration-200 hover:border-slate-300"
+        onClick={toggle}
+      >
+        <span className="truncate">{displayText}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+      
+      {/* Dropdown menu with animation */}
+      <div 
+        className={`absolute right-0 left-0 z-20 mt-1.5 rounded-lg bg-white shadow-lg border border-slate-200 overflow-hidden transition-all duration-200 origin-top ${
+          isOpen 
+            ? 'opacity-100 scale-y-100 visible' 
+            : 'opacity-0 scale-y-95 invisible'
+        }`}
+      >
+        <div className="py-1 max-h-60 overflow-y-auto scrollbar-thin">
+          {elements.map((element, idx) => (
+            <button
+              key={idx}
+              className={`w-full text-left px-3 py-2 text-sm transition-colors duration-150 ${
+                value === element.value
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-slate-700 bg-white hover:bg-slate-50'
+              }`}
+              onClick={() => handleSelect(element.value)}
+            >
+              {element.element}
+            </button>
+          ))}
         </div>
       </div>
     </div>
   );
-};
+});
+
+DropdownC.displayName = 'DropdownC';
+
 export default DropdownC;
