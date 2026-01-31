@@ -125,6 +125,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
       {/* Image Scaling */}
       <DropdownC
         label="Image Scaling"
+        value={pdfSettings.imageScaling}
         elements={[
           { element: 'Default (Fit)', value: 'default' },
           { element: 'Cover', value: 'cover' },
@@ -137,6 +138,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
       {/* Page Size */}
       <DropdownC
         label="Page Size"
+        value={pdfSettings.pageSize}
         elements={[
           { element: 'A4 (210 × 297 mm)', value: 'a4' },
           { element: 'Letter (8.5 × 11 in)', value: 'letter' },
@@ -150,6 +152,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
       {/* Orientation */}
       <DropdownC
         label="Orientation"
+        value={pdfSettings.orientation}
         elements={[
           { element: 'Portrait', value: 'portrait' },
           { element: 'Landscape', value: 'landscape' },
@@ -169,15 +172,17 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
           type="range"
           min="0"
           max="30"
+          step="1"
           value={pdfSettings.margin}
           onChange={(e) => updatePDFSettings({ margin: Number(e.target.value) })}
-          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+          className="range-slider w-full"
         />
       </div>
 
       {/* Quality */}
       <DropdownC
         label="Image Quality"
+        value={pdfSettings.quality}
         elements={[
           { element: 'High Quality', value: 'high' },
           { element: 'Medium Quality', value: 'medium' },
@@ -190,7 +195,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
       <div className="space-y-2 pt-4">
         <button
           onClick={handleConvert}
-          className="w-full px-4 py-3 bg-primary-600 text-white text-sm font-medium rounded-lg shadow-sm transition-smooth flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 bg-primary-600 text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 hover:bg-primary-700 flex items-center justify-center gap-2"
         >
           <Download className="w-4 h-4" />
           Convert to PDF
@@ -199,7 +204,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
         {onAddMoreImages && (
           <button
             onClick={onAddMoreImages}
-            className="w-full px-4 py-2.5 bg-white text-slate-700 text-sm font-medium rounded-lg border border-slate-200 transition-smooth flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 bg-white text-slate-700 text-sm font-medium rounded-lg border border-slate-200 transition-all duration-200 hover:bg-slate-50 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Add More Images
@@ -208,7 +213,7 @@ const GridViewC = memo<GridViewProps>(({ onAddMoreImages }) => {
         
         <button
           onClick={clearAll}
-          className="w-full px-4 py-2.5 bg-white text-red-600 text-sm font-medium rounded-lg border border-red-200 transition-smooth flex items-center justify-center gap-2"
+          className="w-full px-4 py-2.5 bg-white text-red-600 text-sm font-medium rounded-lg border border-red-200 transition-all duration-200 hover:bg-red-50 flex items-center justify-center gap-2"
         >
           <Trash2 className="w-4 h-4" />
           Clear All
