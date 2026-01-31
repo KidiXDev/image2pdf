@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 interface ConvertCProps {
   imageSrc: string;
   altText?: string;
@@ -7,10 +9,10 @@ interface ConvertCProps {
   index?: number;
 }
 
-const ConvertC: React.FC<ConvertCProps> = ({
+const ConvertC = memo<ConvertCProps>(({
   imageSrc,
-  altText = "Image",
-  imageName = "image.jpg",
+  altText = 'Image',
+  imageName = 'image.jpg',
   width = 140,
   height = 180,
   index,
@@ -41,6 +43,8 @@ const ConvertC: React.FC<ConvertCProps> = ({
       </span>
     </div>
   );
-};
+});
+
+ConvertC.displayName = 'ConvertC';
 
 export default ConvertC;
