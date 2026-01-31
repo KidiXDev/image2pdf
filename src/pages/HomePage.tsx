@@ -1,13 +1,13 @@
+import { CircleDollarSign, Lock, Zap } from 'lucide-react';
 import { memo } from 'react';
 import { DropzoneRootProps } from 'react-dropzone';
-import { Lock, Zap, CircleDollarSign } from 'lucide-react';
 
-import HeaderC from '../components/HeaderC';
 import DragAndDropComponent from '../components/DragAndDropC';
 import GridViewC from '../components/GridViewC';
+import HeaderC from '../components/HeaderC';
+import { useImageUpload } from '../hooks/useImageUpload';
 import { useImageStore } from '../stores/imageStore';
 import { useUIStore } from '../stores/uiStore';
-import { useImageUpload } from '../hooks/useImageUpload';
 
 interface IContentProps {
   getRootProps: <T extends DropzoneRootProps>(props?: T) => T;
@@ -25,14 +25,16 @@ const Content = memo<IContentProps>(({ getRootProps, getInputProps }) => {
           <p className="text-slate-600 text-sm sm:text-base">
             Drag and drop your images or click to select files.
             <br />
-            <span className="text-slate-500">Your files stay private - everything happens in your browser.</span>
+            <span className="text-slate-500">
+              Your files stay private - everything happens in your browser.
+            </span>
           </p>
         </div>
         <DragAndDropComponent
           getRootProps={getRootProps}
           getInputProps={getInputProps}
         />
-        
+
         {/* Features Section */}
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="text-center p-4">
@@ -40,7 +42,9 @@ const Content = memo<IContentProps>(({ getRootProps, getInputProps }) => {
               <Lock className="w-5 h-5 text-primary-600" strokeWidth={1.5} />
             </div>
             <h3 className="font-medium text-slate-800 text-sm">100% Private</h3>
-            <p className="text-xs text-slate-500 mt-1">Files never leave your device</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Files never leave your device
+            </p>
           </div>
           <div className="text-center p-4">
             <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-primary-50 flex items-center justify-center">
@@ -51,10 +55,15 @@ const Content = memo<IContentProps>(({ getRootProps, getInputProps }) => {
           </div>
           <div className="text-center p-4">
             <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-primary-50 flex items-center justify-center">
-              <CircleDollarSign className="w-5 h-5 text-primary-600" strokeWidth={1.5} />
+              <CircleDollarSign
+                className="w-5 h-5 text-primary-600"
+                strokeWidth={1.5}
+              />
             </div>
             <h3 className="font-medium text-slate-800 text-sm">Free Forever</h3>
-            <p className="text-xs text-slate-500 mt-1">No watermarks or limits</p>
+            <p className="text-xs text-slate-500 mt-1">
+              No watermarks or limits
+            </p>
           </div>
         </div>
       </div>
@@ -92,9 +101,7 @@ const HomePage = () => {
         {!imageIsInputed && (
           <Content getRootProps={getRootProps} getInputProps={getInputProps} />
         )}
-        {imageIsInputed && (
-          <GridViewC onAddMoreImages={open} />
-        )}
+        {imageIsInputed && <GridViewC onAddMoreImages={open} />}
       </div>
     </div>
   );
