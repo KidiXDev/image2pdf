@@ -23,6 +23,7 @@ interface GridViewProps {
   convertImage?: (configValue: string, options: ConvertOptions) => void;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
   onAddMoreImages?: () => void;
+  onClearAll?: () => void;
 }
 
 interface ConvertOptions {
@@ -41,6 +42,7 @@ const GridViewC: React.FC<GridViewProps> = ({
   convertImage,
   setIsLoading,
   onAddMoreImages,
+  onClearAll,
 }) => {
   const [configValue, setConfigValue] = useState("default");
   const [menuVisible, setMenuVisible] = useState(false);
@@ -69,7 +71,11 @@ const GridViewC: React.FC<GridViewProps> = ({
     };
 
     if (images.length <= 0 || compressedImages.length <= 0) {
-      window.location.href = "/";
+      if (onClearAll) {
+        onClearAll();
+      } else {
+        window.location.href = "/";
+      }
       return;
     }
 
@@ -80,7 +86,7 @@ const GridViewC: React.FC<GridViewProps> = ({
       window.removeEventListener("click", handleCloseMenu);
       window.removeEventListener("scroll", handleCloseMenu);
     };
-  }, [images, compressedImages]);
+  }, [images, compressedImages, onClearAll]);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -179,7 +185,12 @@ const GridViewC: React.FC<GridViewProps> = ({
   };
 
   const handleClearAll = () => {
-    window.location.href = "/";
+    if (onClearAll) {
+      onClearAll();
+    } else {
+      // Fallback to page reload if no callback provided
+      window.location.href = "/";
+    }
   };
 
   const handleConvert = () => {

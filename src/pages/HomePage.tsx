@@ -98,7 +98,7 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingTip, setLoadingTip] = useState("Please Wait");
 
-  const processFiles = useCallback(
+  const handleImageUpload = useCallback(
     async (acceptedFiles: File[]) => {
       const options = {
         maxSizeMB: 1,
@@ -196,9 +196,9 @@ const HomePage = () => {
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      await processFiles(acceptedFiles);
+      await handleImageUpload(acceptedFiles);
     },
-    [processFiles]
+    [handleImageUpload]
   );
 
   const { getRootProps, getInputProps, open } = useDropzone({
@@ -317,8 +317,8 @@ const HomePage = () => {
           }
         }
 
-        // Add image with quality setting
-        const format = image.src.includes("image/png") ? "PNG" : "JPEG";
+        // Detect image format from data URL (format: data:image/png;base64,...)
+        const format = image.src.startsWith("data:image/png") ? "PNG" : "JPEG";
         pdf.addImage(img, format, x, y, scaledWidth, scaledHeight, undefined, "MEDIUM");
 
         processedCount++;
@@ -369,6 +369,11 @@ const HomePage = () => {
             }}
             setIsLoading={setIsLoading}
             onAddMoreImages={handleAddMoreImages}
+            onClearAll={() => {
+              setImages([]);
+              setCompressedImages([]);
+              setImageIsInputed(false);
+            }}
           />
         )}
       </div>
