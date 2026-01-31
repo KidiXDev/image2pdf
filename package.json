@@ -1,13 +1,15 @@
 {
   "name": "image2pdf",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@hello-pangea/dnd": "^16.6.0",
